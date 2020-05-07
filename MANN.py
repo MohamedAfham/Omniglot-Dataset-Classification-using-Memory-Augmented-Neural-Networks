@@ -5,7 +5,7 @@ import tensorflow.compat.v1 as tf
 class MANNCell():
     def __init__(self, rnn_size_list, memory_size, memory_vector_dim, head_num, gamma=0.95,
                  reuse=True):
-        
+                 
         #initialize all the variables
         self.rnn_size_list = rnn_size_list
         self.memory_size = memory_size
