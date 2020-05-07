@@ -27,11 +27,11 @@ class MANNCell():
 
     def __call__(self, x, prev_state):
         prev_read_vector_list = prev_state['read_vector_list']   
-        controller_input = tf.concat([x] + prev_read_vector_list, axis=1)
-        controller_input = tf.expand_dims(controller_input,axis=1)
+        controller_input = tf.concat([x] + prev_read_vector_list, axis=-1)
 
 
         #next we pass the controller, which is the RNN cell, the controller_input and prev_controller_state
+        controller_input = tf.expand_dims(controller_input,axis=1)
         controller_output = self.controller(controller_input)
         controller_output = tf.squeeze(controller_output)
             
@@ -108,8 +108,7 @@ class MANNCell():
         with tf.variable_scope('reading'):
             for i in range(self.head_num):
                 read_vector = tf.reduce_sum(tf.expand_dims(w_r_list[i], dim=2) * M, axis=1)
-                read_vector_list.append(read_vector)
-        
+                read_vector_list.append(read_vector)       
 
         
         #controller output
