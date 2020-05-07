@@ -101,23 +101,26 @@ class DataGenerator(object):
 
         #############################
         #### YOUR CODE GOES HERE ####
-        B = batch_size; K = self.num_samples_per_class; N = self.num_classes
+        K = self.num_samples_per_class; N = self.num_classes
         dim_input = self.dim_input
-        all_image_batches = []
-        all_label_batches = []
-        for val in range(B):
-            #Sample N different classes from folders
-            paths = random.sample(folders,N)
-            labels = np.identity(N)
-            images_labels = get_images(paths, labels, nb_samples=K, shuffle=True)
-            for num in range(N):
-                one_label = images_labels[num * K:(num+1) * K]
-                for lab in one_label:
-                    all_label_batches.append(lab[0])
-                    all_image_batches.append(image_file_to_array(lab[1], dim_input))
+        while True:
+            batch_features = np.zeros((batch_size,K,N,784))
+            batch_labels = np.zeros((batch_size,K,N,N))
+            for val in range(batch_size):
+                all_image_batches = []
+                all_label_batches = []
+                #Sample N different classes from folders
+                paths = random.sample(folders,N)
+                labels = np.identity(N)
+                images_labels = get_images(paths, labels, nb_samples=K, shuffle=True)
+                for num in range(N):
+                    one_label = images_labels[num * K:(num+1) * K]
+                    for lab in range(len(one_label)):
+                        batch_features[val,lab,num] = image_file_to_array(one_label[lab][1], dim_input)
+                        batch_labels[val,lab,num] = one_label[lab][0]
 
-        #############################
-        all_image_batches = np.array(all_image_batches)
-        all_label_batches = np.array(all_label_batches)
+            #############################
+            batch_features = batch_features.reshape(batch_size*K*N,784)
+            batch_labels = batch_labels.reshape(batch_size*K*N,N)
 
-        return all_image_batches, all_label_batches
+            yield batch_features,batch_labels
