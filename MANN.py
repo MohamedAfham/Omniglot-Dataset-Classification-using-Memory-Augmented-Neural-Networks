@@ -1,11 +1,12 @@
 import numpy as np 
 import tensorflow.compat.v1 as tf 
-
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Input,LSTM,Reshape
 
 class MANNCell():
     def __init__(self, rnn_size_list, memory_size, memory_vector_dim, head_num, gamma=0.95,
                  reuse=True):
-                 
+
         #initialize all the variables
         self.rnn_size_list = rnn_size_list
         self.memory_size = memory_size
@@ -17,19 +18,22 @@ class MANNCell():
       
         
         #initialize controller as the basic rnn cell\
-        #rnn_cells = [tf.nn.rnn_cell.LSTMCell(num_units=n) for n in self.rnn_size_list]
-        self.controller = tf.nn.rnn_cell.LSTMCell(rnn_size_list)
+        network = Sequential()
+        network.add(LSTM(units=128,activation='tanh',return_sequences=True))
+        network.add(LSTM(units=64,activation='tanh',return_sequences=True))
+        network.add(Dense(5,activation='softmax'))
 
-        
+        self.controller = network
 
     def __call__(self, x, prev_state):
-        prev_read_vector_list = prev_state['read_vector_list']  
-        prev_controller_state = prev_state['controller_state']   
+        prev_read_vector_list = prev_state['read_vector_list']   
         controller_input = tf.concat([x] + prev_read_vector_list, axis=1)
-        
-        #next we pass the controller, which is the RNN cell, the controller_input and prev_controller_state
-        controller_output, controller_state = self.controller(controller_input, prev_controller_state)
+        controller_input = tf.expand_dims(controller_input,axis=1)
 
+
+        #next we pass the controller, which is the RNN cell, the controller_input and prev_controller_state
+        controller_output = self.controller(controller_input)
+        controller_output = tf.squeeze(controller_output)
             
         num_parameters_per_head = self.memory_vector_dim + 1
         total_parameter_num = num_parameters_per_head * self.head_num
@@ -105,13 +109,14 @@ class MANNCell():
             for i in range(self.head_num):
                 read_vector = tf.reduce_sum(tf.expand_dims(w_r_list[i], dim=2) * M, axis=1)
                 read_vector_list.append(read_vector)
+        
 
         
         #controller output
         NTM_output = tf.concat([controller_output] + read_vector_list, axis=1)
 
         state = {
-            'controller_state': controller_state,
+           # 'controller_state': controller_state,
             'read_vector_list': read_vector_list,
             'w_r_list': w_r_list,
             'w_w_list': w_w_list,
@@ -158,7 +163,6 @@ class MANNCell():
         one_hot_weight_vector = tf.constant(one_hot_weight_vector, dtype=tf.float32)
         with tf.variable_scope('init', reuse=self.reuse):
             state = {
-                'controller_state': self.controller.zero_state(batch_size, dtype),
                 'read_vector_list': [tf.zeros([batch_size, self.memory_vector_dim])
                                      for _ in range(self.head_num)],
                 'w_r_list': [one_hot_weight_vector for _ in range(self.head_num)],
