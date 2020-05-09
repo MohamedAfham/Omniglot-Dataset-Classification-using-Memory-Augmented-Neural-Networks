@@ -4,12 +4,11 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input,LSTM,Reshape,Conv2D,Flatten
 
 class MANNCell():
-    def __init__(self, rnn_size_list,FC_layer_list, memory_size, memory_vector_dim, head_num, gamma=0.95,
+    def __init__(self, rnn_size,memory_size, memory_vector_dim, head_num, gamma=0.95,
                  reuse=True):
 
         #initialize all the variables
-        self.rnn_size_list = rnn_size_list
-        self.FC_layer_list = FC_layer_list
+        self.rnn_size_list = rnn_size
         self.memory_size = memory_size
         self.memory_vector_dim = memory_vector_dim
         self.head_num = head_num                                   
@@ -20,12 +19,14 @@ class MANNCell():
         
         #initialize controller as the basic rnn cell
         network = Sequential()
-        for unit in self.rnn_size_list:
-            network.add(LSTM(units=unit,activation='tanh',return_sequences=True))
-        network.add(Flatten())
-        for layer in self.FC_layer_list:
-            network.add(Dense(layer,activation='relu'))
-        network.add(Dense(5,activation='softmax'))
+        network.add(LSTM(units=rnn_size,activation='tanh',return_sequences=True))
+        #for unit in self.rnn_size_list:
+        #    network.add(LSTM(units=unit,activation='tanh',return_sequences=True))
+        #network.add(Flatten())
+        #for layer in self.FC_layer_list:
+        #    network.add(Dense(layer,activation='relu'))
+        network.add(LSTM(units=5,activation='tanh',return_sequences=True))
+        #network.add(Dense(5,activation='softmax'))
 
         self.controller = network
 
@@ -119,7 +120,6 @@ class MANNCell():
         NTM_output = tf.concat([controller_output] + read_vector_list, axis=1)
 
         state = {
-           # 'controller_state': controller_state,
             'read_vector_list': read_vector_list,
             'w_r_list': w_r_list,
             'w_w_list': w_w_list,
