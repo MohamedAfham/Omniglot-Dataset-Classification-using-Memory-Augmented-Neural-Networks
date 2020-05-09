@@ -116,9 +116,14 @@ class DataGenerator(object):
                     for lab in range(len(one_label)):
                         batch_features[val,lab,num] = image_file_to_array(one_label[lab][1], dim_input)
                         batch_labels[val,lab,num] = one_label[lab][0]
-
             #############################
+
             batch_features = batch_features.reshape(batch_size*K*N,784)
             batch_labels = batch_labels.reshape(batch_size*K*N,N)
+            add_init = np.insert(batch_labels,0,[0]*N,axis=0)
+            labels_concat = add_init[:-1,:]
 
-            yield batch_features,batch_labels
+            inputs = np.concatenate((batch_features,labels_concat),axis=-1)
+            outputs = batch_labels
+
+            yield inputs,outputs
