@@ -107,8 +107,6 @@ class DataGenerator(object):
             batch_features = np.zeros((batch_size,K,N,784))
             batch_labels = np.zeros((batch_size,K,N,N))
             for val in range(batch_size):
-                all_image_batches = []
-                all_label_batches = []
                 #Sample N different classes from folders
                 paths = random.sample(folders,N)
                 labels = np.identity(N)

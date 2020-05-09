@@ -1,14 +1,15 @@
 import numpy as np 
 import tensorflow.compat.v1 as tf 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Input,LSTM,Reshape
+from tensorflow.keras.layers import Dense, Input,LSTM,Reshape,Conv2D,Flatten
 
 class MANNCell():
-    def __init__(self, rnn_size_list, memory_size, memory_vector_dim, head_num, gamma=0.95,
+    def __init__(self, rnn_size_list,FC_layer_list, memory_size, memory_vector_dim, head_num, gamma=0.95,
                  reuse=True):
 
         #initialize all the variables
         self.rnn_size_list = rnn_size_list
+        self.FC_layer_list = FC_layer_list
         self.memory_size = memory_size
         self.memory_vector_dim = memory_vector_dim
         self.head_num = head_num                                   
@@ -17,10 +18,13 @@ class MANNCell():
         self.gamma = gamma
       
         
-        #initialize controller as the basic rnn cell\
+        #initialize controller as the basic rnn cell
         network = Sequential()
-        network.add(LSTM(units=128,activation='tanh',return_sequences=True))
-        network.add(LSTM(units=64,activation='tanh',return_sequences=True))
+        for unit in self.rnn_size_list:
+            network.add(LSTM(units=unit,activation='tanh',return_sequences=True))
+        network.add(Flatten())
+        for layer in self.FC_layer_list:
+            network.add(Dense(layer,activation='relu'))
         network.add(Dense(5,activation='softmax'))
 
         self.controller = network
