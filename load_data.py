@@ -118,12 +118,12 @@ class DataGenerator(object):
                         batch_labels[val,lab,num] = one_label[lab][0]
             #############################
 
-            batch_features = batch_features.reshape(batch_size*K*N,784)
-            batch_labels = batch_labels.reshape(batch_size*K*N,N)
-            add_init = np.insert(batch_labels,0,[0]*N,axis=0)
-            labels_concat = add_init[:-1,:]
+            batch_features = batch_features.reshape(batch_size,K*N,784)
+            batch_labels = batch_labels.reshape(batch_size,K*N,N)
+            add_init = np.insert(batch_labels,0,[0]*N,axis=1)
+            labels_concat = add_init[:,:-1,:]
 
             inputs = np.concatenate((batch_features,labels_concat),axis=-1)
-            outputs = batch_labels
-
+            outputs = batch_labels[:,-1,:]
+            
             yield inputs,outputs
