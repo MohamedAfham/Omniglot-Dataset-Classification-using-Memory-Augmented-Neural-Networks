@@ -4,12 +4,12 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input,LSTM,Reshape,Conv2D,Flatten
 
 class MANNCell():
-    def __init__(self, rnn_size_list,memory_size, memory_vector_dim, head_num,samples_per_batch, gamma=0.95,
+    def __init__(self, rnn_size,memory_size, memory_vector_dim, head_num,samples_per_batch, gamma=0.95,
                  reuse=True):
 
         #initialize all the variables
         self.samples_per_batch = samples_per_batch
-        self.rnn_size_list = rnn_size_list
+        self.rnn_size = rnn_size
         self.memory_size = memory_size
         self.memory_vector_dim = memory_vector_dim
         self.head_num = head_num                                   
@@ -20,15 +20,14 @@ class MANNCell():
         
         #initialize controller as the basic rnn cell
         network = Sequential()
-        #network.add(LSTM(units=rnn_size,activation='tanh',return_sequences=True))
-        for unit in self.rnn_size_list:
-            network.add(LSTM(units=unit,activation='tanh',return_sequences=True))
-        #network.add(Flatten())
-        #for layer in self.FC_layer_list:
-        #    network.add(Dense(layer,activation='relu'))
-        #network.add(LSTM(units=5,activation='tanh',return_sequences=True))
-        network.add(Dense(5,activation='softmax'))
+        network.add(LSTM(units=rnn_size,activation='tanh',return_sequences=True))
 
+        # If more LSTM layers are prefered to use, comment the above lines and uncomment the lines below
+        # rnn_size should be a list of units if so.
+
+        #for unit in self.rnn_size_list:
+         #   network.add(LSTM(units=unit,activation='tanh',return_sequences=True))
+        
         self.controller = network
 
     def __call__(self, x, prev_state):
@@ -37,9 +36,7 @@ class MANNCell():
 
 
         #next we pass the controller, which is the RNN cell, the controller_input and prev_controller_state
-        #controller_input = tf.expand_dims(controller_input,axis=1)
         controller_output = self.controller(controller_input)
-        #controller_output = tf.squeeze(controller_output)
             
         num_parameters_per_head = self.memory_vector_dim + 1
         total_parameter_num = num_parameters_per_head * self.head_num
@@ -118,7 +115,6 @@ class MANNCell():
 
         
         #controller output
-        NTM_output = tf.concat([controller_output] + read_vector_list, axis=2)
 
         state = {
             'read_vector_list': read_vector_list,
@@ -129,7 +125,7 @@ class MANNCell():
         }
 
         self.step += 1
-        return NTM_output, state
+        return controller_output, state
 
     #weight vector for read operation   
     def read_head_addressing(self, k, prev_M):
